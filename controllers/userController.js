@@ -1,5 +1,5 @@
 const User = require('../models/User');
-
+const Thought = require('../models/Thought')
 module.exports = {
   async getUsers(req, res) {
     try {
@@ -34,17 +34,17 @@ module.exports = {
   },
   async updateUser(req, res) {
     try {
-      const video = await Video.findOneAndUpdate(
-        { _id: req.params.videoId },
+      const user = await User.findOneAndUpdate(
+        { _id: req.params.userId },
         { $set: req.body },
         { runValidators: true, new: true }
       );
 
-      if (!video) {
-        return res.status(404).json({ message: 'No video with this id!' });
+      if (!user) {
+        return res.status(404).json({ message: 'No user with this id!' });
       }
 
-      res.json(video);
+      res.json(user);
     } catch (err) {
       console.log(err);
       res.status(500).json(err);
@@ -52,27 +52,72 @@ module.exports = {
   },
   async deleteUser(req, res) {
     try {
-      const video = await Video.findOneAndRemove({ _id: req.params.videoId });
+      const thought = await Thought.findOneAndRemove({ username: req.body.username });
 
-      if (!video) {
-        return res.status(404).json({ message: 'No video with this id!' });
+      if (!thought) {
+        return res.status(404).json({ message: 'No thought with this id!' });
       }
 
-      const user = await User.findOneAndUpdate(
-        { videos: req.params.videoId },
-        { $pull: { videos: req.params.videoId } },
+      const user = await User.findOneAndRemove(
+        { _id: req.params.userId },
+      
         { new: true }
       );
 
       if (!user) {
         return res
           .status(404)
-          .json({ message: 'Video created but no user with this id!' });
+          .json({ message: 'thought created but no user with this id!' });
       }
 
-      res.json({ message: 'Video successfully deleted!' });
+      res.json({ message: 'thought successfully deleted!' });
     } catch (err) {
       res.status(500).json(err);
     }
   },
+
+  async addFriend(req, res) {
+    try {
+      
+      const user = await User.findOneAndUpdate(
+        { _id: req.params.userId },
+        { $addToSet: { friends: req.params.friendId } },
+        { new: true }
+      );
+
+      if (!user) {
+        return res.status(404).json({
+          message: 'friend added, but found no user with that ID',
+        });
+      }
+
+      res.json('Added the friend 🎉');
+    } catch (err) {
+      console.log(err);
+      res.status(500).json(err);
+    }
+  },
+
+
+  async removeFriend(req, res) {
+    try {
+    
+      const user = await User.findOneAndUpdate(
+        { _id: req.params.userId },
+        { $pull: { friends: req.params.friendId } },
+        { new: true }
+      );
+
+      if (!user) {
+        return res
+          .status(404)
+          .json({ message: 'friend removed !' });
+      }
+
+      res.json({ message: 'friend successfully deleted!' });
+    } catch (err) {
+      res.status(500).json(err);
+    }
+  },
+
 };
