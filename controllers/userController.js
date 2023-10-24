@@ -32,4 +32,47 @@ module.exports = {
       res.status(500).json(err);
     }
   },
+  async updateUser(req, res) {
+    try {
+      const video = await Video.findOneAndUpdate(
+        { _id: req.params.videoId },
+        { $set: req.body },
+        { runValidators: true, new: true }
+      );
+
+      if (!video) {
+        return res.status(404).json({ message: 'No video with this id!' });
+      }
+
+      res.json(video);
+    } catch (err) {
+      console.log(err);
+      res.status(500).json(err);
+    }
+  },
+  async deleteUser(req, res) {
+    try {
+      const video = await Video.findOneAndRemove({ _id: req.params.videoId });
+
+      if (!video) {
+        return res.status(404).json({ message: 'No video with this id!' });
+      }
+
+      const user = await User.findOneAndUpdate(
+        { videos: req.params.videoId },
+        { $pull: { videos: req.params.videoId } },
+        { new: true }
+      );
+
+      if (!user) {
+        return res
+          .status(404)
+          .json({ message: 'Video created but no user with this id!' });
+      }
+
+      res.json({ message: 'Video successfully deleted!' });
+    } catch (err) {
+      res.status(500).json(err);
+    }
+  },
 };
